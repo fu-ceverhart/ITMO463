@@ -18,3 +18,5 @@ number-of-azs          = 2
 region                 = "us-east-1"
 raw-s3                 = "raw-module-03"
 finished-s3            = "finished-module-03"
+raw-s3-bucket          = "raw-module-03"
+finished-s3-bucket     = "finished-module-03"

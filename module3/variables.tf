@@ -29,5 +29,5 @@ variable "max" {}
 variable "desired" {}
 variable "number-of-azs" {}
 variable "region" {}
-# variable "raw-s3-bucket" {}
-# variable "finished-s3-bucket" {}
+variable "raw-s3-bucket" {}
+variable "finished-s3-bucket" {}
