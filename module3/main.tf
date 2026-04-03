@@ -70,13 +70,13 @@ resource "aws_vpc_dhcp_options" "project" {
 # Associate these options with our VPC now
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_dhcp_options
 resource "aws_vpc_dhcp_options_association" "dns_resolver" {
-  vpc_id          = 
+  vpc_id          = vpc-09b8cff394e1a8320
   dhcp_options_id = 
 }
 
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/internet_gateway
 resource "aws_internet_gateway" "gw" {
-  vpc_id = 
+  vpc_id = vpc-09b8cff394e1a8320
 
   tags = {
     Name = var.tag-name
@@ -86,7 +86,7 @@ resource "aws_internet_gateway" "gw" {
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table
 resource "aws_route_table" "example" {
   depends_on = [ aws_vpc.project ]
-  vpc_id = 
+  vpc_id = "vpc-09b8cff394e1a8320"
 
   route {
     cidr_block = 
