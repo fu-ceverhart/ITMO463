@@ -233,19 +233,15 @@ resource "aws_launch_template" "lt" {
 ##############################################################################
 
 resource "aws_autoscaling_group" "asg" {
-  name                      = 
+  name                      = var.asg-name
   depends_on                = [aws_launch_template.lt]
-  desired_capacity          = 
-  max_size                  = 
-  min_size                  = 
+  desired_capacity          = var.desired
+  max_size                  = var.max
+  min_size                  = var.min
   health_check_grace_period = 300
   health_check_type         = "EC2"
-  target_group_arns         = 
-  # place in all AZs
-  # Use this if you only have the default subnet per AZ
-  # availability_zones        =  data.aws_availability_zones.available.names
-  # Use this is you have multiple subnets per AZ
-  vpc_zone_identifier = [for subnet in aws_subnet.private : subnet.id]
+  target_group_arns         = [aws_lb_target_group.alb-lb-tg.arn]
+  vpc_zone_identifier       = [for subnet in aws_subnet.private : subnet.id]
 
   tag {
     key                 = "Name"
@@ -254,7 +250,7 @@ resource "aws_autoscaling_group" "asg" {
   }
 
   launch_template {
-    id      = 
+    id      = aws_launch_template.lt.id
     version = "$Latest"
   }
 }
