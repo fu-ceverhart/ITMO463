@@ -260,12 +260,11 @@ resource "aws_autoscaling_group" "asg" {
 ##############################################################################
 resource "aws_lb" "lb" {
   depends_on = [ aws_subnet.private ]
-  name               = 
+  name               = var.elb-name
   internal           = false
   load_balancer_type = "application"
-  security_groups = 
-  # Place across all subnets
-  subnets = [for subnet in aws_subnet.private : subnet.id]
+  security_groups    = [aws_security_group.allow_http.id]
+  subnets            = [for subnet in aws_subnet.private : subnet.id]
 
   enable_deletion_protection = false
 
