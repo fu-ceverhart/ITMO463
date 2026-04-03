@@ -75,13 +75,13 @@ resource "aws_vpc_dhcp_options" "project" {
 # Associate these options with our VPC now
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_dhcp_options
 resource "aws_vpc_dhcp_options_association" "dns_resolver" {
-  vpc_id          = vpc-09b8cff394e1a8320
-  dhcp_options_id = 
+  vpc_id          = aws_vpc.project.id
+  dhcp_options_id = aws_vpc_dhcp_options.project.id
 }
 
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/internet_gateway
 resource "aws_internet_gateway" "gw" {
-  vpc_id = vpc-09b8cff394e1a8320
+  vpc_id = aws_vpc.project.id
 
   tags = {
     Name = var.tag-name
@@ -91,11 +91,11 @@ resource "aws_internet_gateway" "gw" {
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table
 resource "aws_route_table" "example" {
   depends_on = [ aws_vpc.project ]
-  vpc_id = "vpc-09b8cff394e1a8320"
+  vpc_id = aws_vpc.project.id
 
   route {
-    cidr_block = 
-    gateway_id = 
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.gw.id
   }
 
   tags = {
@@ -341,11 +341,23 @@ resource "aws_lb_listener" "front_end" {
 ##############################################################################
 
 resource "aws_s3_bucket" "raw-bucket" {
-  # Create bucket name and use force_destroy
+    # Create bucket name and use force_destroy
+    bucket        = var.raw-s3-bucket
+    force_destroy = true
+
+    tags = {
+        Name = var.tag-name
+    }
 }
 
 resource "aws_s3_bucket" "finished-bucket" {
-  # Create bucket name and use force_destroy
+    # Create bucket name and use force_destroy
+    bucket        = var.finished-s3-bucket
+    force_destroy = true
+
+    tags = {
+    Name = var.tag-name
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "allow_access_from_another_account-raw" {
