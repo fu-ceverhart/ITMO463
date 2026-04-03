@@ -117,8 +117,8 @@ resource "aws_route_table_association" "subnets" {
 # Now make the new route the main associated route
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/main_route_table_association
 resource "aws_main_route_table_association" "a" {
-  vpc_id         = 
-  route_table_id = 
+  vpc_id         = aws_vpc.project.id
+  route_table_id = aws_route_table.example.id
 }
 
 # IAM instance policy
