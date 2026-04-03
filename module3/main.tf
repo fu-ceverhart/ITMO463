@@ -124,9 +124,8 @@ resource "aws_main_route_table_association" "a" {
 # IAM instance policy
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile
 resource "aws_iam_instance_profile" "coursera_profile" {
-  # Give it a name
-  name = 
-  role = 
+  name = var.tag-name
+  role = aws_iam_role.role.name
 }
 
 # Creating the policy (rules) for what the role can do
