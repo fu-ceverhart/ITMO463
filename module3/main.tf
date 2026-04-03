@@ -376,9 +376,9 @@ resource "aws_s3_bucket_public_access_block" "allow_access_from_another_account-
 }
 
 resource "aws_s3_bucket_policy" "allow_access_from_another_account-raw" {
-  depends_on  = []
-  bucket = 
-  policy = data.aws_iam_policy_document.allow_access_from_another_account-raw.json
+  depends_on = [aws_s3_bucket_public_access_block.allow_access_from_another_account-raw]
+  bucket     = aws_s3_bucket.raw-bucket.id
+  policy     = data.aws_iam_policy_document.allow_access_from_another_account-raw.json
 }
 
 resource "aws_s3_bucket_policy" "allow_access_from_another_account-finished" {
