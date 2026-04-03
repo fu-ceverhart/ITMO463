@@ -209,13 +209,13 @@ output "aws_subnets" {
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template
 ##############################################################################
 resource "aws_launch_template" "lt" {
-  image_id                             = 
-  instance_initiated_shutdown_behavior = 
-  instance_type                        = 
-  key_name                             = 
-  vpc_security_group_ids               = 
+  image_id                             = var.imageid
+  instance_initiated_shutdown_behavior = "terminate"
+  instance_type                        = var.instance-type
+  key_name                             = var.key-name
+  vpc_security_group_ids               = [aws_security_group.allow_http.id]
   iam_instance_profile {
-    name = 
+    name = aws_iam_instance_profile.coursera_profile.name
   }
 
   tag_specifications {
