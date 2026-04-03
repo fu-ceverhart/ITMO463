@@ -5,7 +5,12 @@
 # With a CIDR block of 172.32.0.0/16
 # Enable_dns_hostnames
 resource "aws_vpc" "project" {
+  cidr_block           = "172.32.0.0/16"
+  enable_dns_hostnames = true
 
+  tags = {
+    Name = var.tag-name
+  }
 }
 
 # Query the VPC information
