@@ -34,7 +34,11 @@ output "list-of-azs" {
 # Don't forget the egress rules!!!
 # 
 resource "aws_security_group" "allow_http" {
+    vpc_id = aws_vpc.project.id
 
+  tags = {
+    Name = var.tag-name
+  }
 }
 
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule
