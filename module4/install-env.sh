@@ -41,7 +41,7 @@ chmod 600 /home/ubuntu/.ssh/config
 sudo -u ubuntu git clone git@github.com:fu-ceverhart/ITMO463.git /home/ubuntu/ITMO463
 
 # Install app dependencies
-cd /home/ubuntu/ITMO463/module-04
+cd /home/ubuntu/ITMO463/module4
 npm install
 
 # Configure nginx using the config from the repo
