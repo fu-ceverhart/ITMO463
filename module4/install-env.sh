@@ -45,7 +45,7 @@ cd /home/ubuntu/ITMO463/module4
 npm install
 
 # Configure nginx using the config from the repo
-cp /home/ubuntu/ITMO463/module-04/default /etc/nginx/sites-available/default
+cp /home/ubuntu/ITMO463/module4/default /etc/nginx/sites-available/default
 systemctl restart nginx
 systemctl enable nginx
 
@@ -60,8 +60,8 @@ until mysql -h $RDS_HOST -u $DB_USER -p$DB_PASS -e "SELECT 1;" 2>/dev/null; do
   sleep 10
 done
 
-mysql -h $RDS_HOST -u $DB_USER -p$DB_PASS < /home/ubuntu/ITMO463/module-04/create.sql
+mysql -h $RDS_HOST -u $DB_USER -p$DB_PASS < /home/ubuntu/ITMO463/module4/create.sql
 
 # Start the app
-cd /home/ubuntu/ITMO463/module-04
+cd /home/ubuntu/ITMO463/module4
 node app.js &
