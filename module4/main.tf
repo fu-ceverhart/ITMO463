@@ -335,3 +335,22 @@ resource "aws_sns_topic" "updates" {
     Name = var.tag-name
   }
 }
+
+resource "aws_launch_template" "lt" {
+  image_id                             = var.imageid
+  instance_initiated_shutdown_behavior = "terminate"
+  instance_type                        = var.instance-type
+  key_name                             = var.key-name
+  vpc_security_group_ids               = [aws_security_group.module_04_sg.id]
+  iam_instance_profile {
+    name = aws_iam_instance_profile.coursera_profile.name
+  }
+
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = var.tag-name
+    }
+  }
+  user_data = filebase64("./install-env.sh")
+}
