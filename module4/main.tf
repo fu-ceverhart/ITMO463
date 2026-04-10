@@ -375,3 +375,38 @@ resource "aws_iam_role" "coursera_role" {
     Name = var.tag-name
   }
 }
+
+resource "aws_iam_role_policy" "coursera_policy" {
+  name = "coursera_policy"
+  role = aws_iam_role.coursera_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.raw.arn,
+          "${aws_s3_bucket.raw.arn}/*",
+          aws_s3_bucket.finished.arn,
+          "${aws_s3_bucket.finished.arn}/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = [
+          aws_secretsmanager_secret.coursera_project_username.arn,
+          aws_secretsmanager_secret.coursera_project_password.arn
+        ]
+      }
+    ]
+  })
+}
