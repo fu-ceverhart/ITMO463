@@ -6,6 +6,7 @@ resource "aws_instance" "helloworld" {
   key_name               = var.key-name
   vpc_security_group_ids = [aws_security_group.module_04_sg.id]
   user_data              = filebase64("./install-env.sh")
+  subnet_id              = aws_subnet.module_04_public.id
 
   tags = {
     Name = var.tag-name
@@ -82,6 +83,8 @@ resource "aws_db_instance" "default" {
   parameter_group_name = "default.mysql8.0"
   skip_final_snapshot  = true
   vpc_security_group_ids = [aws_security_group.module_04_rds_sg.id]
+  db_subnet_group_name   = aws_db_subnet_group.module_04_rds_subnet_group.name
+  publicly_accessible    = false
   
   tags = {
     Name = var.tag-name
@@ -145,6 +148,80 @@ resource "aws_security_group" "module_04_rds_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+resource "aws_vpc" "module_04_vpc" {
+  cidr_block = "10.0.0.0/16"
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+resource "aws_internet_gateway" "module_04_igw" {
+  vpc_id = aws_vpc.module_04_vpc.id
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+resource "aws_subnet" "module_04_public" {
+  vpc_id                  = aws_vpc.module_04_vpc.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = var.az[0]
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+resource "aws_subnet" "module_04_private_1" {
+  vpc_id            = aws_vpc.module_04_vpc.id
+  cidr_block        = "10.0.2.0/24"
+  availability_zone = var.az[1]
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+resource "aws_subnet" "module_04_private_2" {
+  vpc_id            = aws_vpc.module_04_vpc.id
+  cidr_block        = "10.0.3.0/24"
+  availability_zone = var.az[2]
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+resource "aws_route_table" "module_04_public_rt" {
+  vpc_id = aws_vpc.module_04_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.module_04_igw.id
+  }
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+resource "aws_route_table_association" "module_04_public_rta" {
+  subnet_id      = aws_subnet.module_04_public.id
+  route_table_id = aws_route_table.module_04_public_rt.id
+}
+
+resource "aws_db_subnet_group" "module_04_rds_subnet_group" {
+  name       = "module_04_rds_subnet_group"
+  subnet_ids = [aws_subnet.module_04_private_1.id, aws_subnet.module_04_private_2.id]
 
   tags = {
     Name = var.tag-name
