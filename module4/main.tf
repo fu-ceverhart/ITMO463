@@ -183,6 +183,28 @@ resource "aws_subnet" "module_04_public" {
   }
 }
 
+resource "aws_subnet" "module_04_public_2" {
+  vpc_id                  = aws_vpc.module_04_vpc.id
+  cidr_block              = "10.0.4.0/24"
+  availability_zone       = var.az[1]
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+resource "aws_subnet" "module_04_public_3" {
+  vpc_id                  = aws_vpc.module_04_vpc.id
+  cidr_block              = "10.0.5.0/24"
+  availability_zone       = var.az[2]
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
 resource "aws_subnet" "module_04_private_1" {
   vpc_id            = aws_vpc.module_04_vpc.id
   cidr_block        = "10.0.2.0/24"
@@ -221,6 +243,16 @@ resource "aws_route_table_association" "module_04_public_rta" {
   route_table_id = aws_route_table.module_04_public_rt.id
 }
 
+resource "aws_route_table_association" "module_04_public_2_rta" {
+  subnet_id      = aws_subnet.module_04_public_2.id
+  route_table_id = aws_route_table.module_04_public_rt.id
+}
+
+resource "aws_route_table_association" "module_04_public_3_rta" {
+  subnet_id      = aws_subnet.module_04_public_3.id
+  route_table_id = aws_route_table.module_04_public_rt.id
+}
+
 resource "aws_db_subnet_group" "module_04_rds_subnet_group" {
   name       = "module_04_rds_subnet_group"
   subnet_ids = [aws_subnet.module_04_private_1.id, aws_subnet.module_04_private_2.id]
@@ -228,4 +260,24 @@ resource "aws_db_subnet_group" "module_04_rds_subnet_group" {
   tags = {
     Name = var.tag-name
   }
+}
+
+resource "aws_lb" "lb" {
+  depends_on = [ aws_internet_gateway.module_04_igw]
+  name               = var.elb-name
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.module_04_sg.id]
+  subnets            = [aws_subnet.module_04_public.id, aws_subnet.module_04_public_2.id, aws_subnet.module_04_public_3.id]
+
+  enable_deletion_protection = false
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+# output will print a value out to the screen
+output "url" {
+  value = aws_lb.lb.dns_name
 }
