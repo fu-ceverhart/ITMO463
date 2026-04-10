@@ -239,7 +239,7 @@ resource "aws_route_table_association" "module_04_public_3_rta" {
 }
 
 resource "aws_db_subnet_group" "module_04_rds_subnet_group" {
-  name       = "module_04_rds_subnet_group"
+  name       = "coursera-project"
   subnet_ids = [aws_subnet.module_04_private_1.id, aws_subnet.module_04_private_2.id]
 
   tags = {
