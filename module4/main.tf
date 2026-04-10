@@ -420,7 +420,27 @@ resource "aws_iam_role_policy" "coursera_policy_rds" {
   })
 }
 
-urce "aws_iam_instance_profile" "coursera_profile" {
+resource "aws_iam_role_policy" "coursera_policy_sns" {
+  name = "coursera_policy_sns"
+  role = aws_iam_role.coursera_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "sns:Publish",
+          "sns:Subscribe",
+          "sns:ListTopics"
+        ]
+        Resource = aws_sns_topic.updates.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_instance_profile" "coursera_profile" {
   name = "coursera_profile"
   role = aws_iam_role.coursera_role.name
 }
