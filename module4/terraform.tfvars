@@ -4,7 +4,7 @@ imageid                = "ami-021769d848635b6f4"
 # Use t2.micro for the AWS Free Tier
 instance-type          = "t3.micro"
 key-name               = "module-04"
-vpc_security_group_ids = "sg-0fafd233da91b97bd"
+# vpc_security_group_ids = "sg-0fafd233da91b97bd"
 tag-name               = "module-04"
 user-sns-topic         = "cde-updates"
 elb-name               = "cde-elb"
