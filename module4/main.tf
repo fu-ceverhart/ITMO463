@@ -410,3 +410,8 @@ resource "aws_iam_role_policy" "coursera_policy" {
     ]
   })
 }
+
+resource "aws_iam_instance_profile" "coursera_profile" {
+  name = "coursera_profile"
+  role = aws_iam_role.coursera_role.name
+}
