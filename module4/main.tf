@@ -415,7 +415,8 @@ resource "aws_iam_role_policy" "coursera_policy_sm" {
         ]
         Resource = [
           aws_secretsmanager_secret.coursera_project_username.arn,
-          aws_secretsmanager_secret.coursera_project_password.arn
+          aws_secretsmanager_secret.coursera_project_password.arn,
+          "arn:aws:secretsmanager:us-east-1:766355023930:secret:github-deploy-key*"
         ]
       }
     ]
