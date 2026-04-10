@@ -401,7 +401,26 @@ resource "aws_iam_role_policy" "coursera_policy_sm" {
   })
 }
 
-resource "aws_iam_instance_profile" "coursera_profile" {
+resource "aws_iam_role_policy" "coursera_policy_rds" {
+  name = "coursera_policy_rds"
+  role = aws_iam_role.coursera_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "rds:DescribeDBInstances",
+          "rds:Connect"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+urce "aws_iam_instance_profile" "coursera_profile" {
   name = "coursera_profile"
   role = aws_iam_role.coursera_role.name
 }
