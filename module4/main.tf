@@ -7,43 +7,32 @@ data "aws_secretsmanager_random_password" "coursera_project" {
   exclude_punctuation = true
 }
 
-# Create the actual secret (not adding a value yet)
-# Provides a resource to manage AWS Secrets Manager secret metadata. To manage
-# secret rotation, see the aws_secretsmanager_secret_rotation resource. To 
-# manage a secret value, see the aws_secretsmanager_secret_version resource.
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret
 resource "aws_secretsmanager_secret" "coursera_project_username" {
   name = "uname"
-  # https://github.com/hashicorp/terraform-provider-aws/issues/4467
-  # This will automatically delete the secret upon Terraform destroy 
   recovery_window_in_days = 0
+  tags = {
+    Name = var.tag-name
+  }
 }
 
 resource "aws_secretsmanager_secret" "coursera_project_password" {
   name = "pword"
-  # https://github.com/hashicorp/terraform-provider-aws/issues/4467
-  # This will automatically delete the secret upon Terraform destroy 
   recovery_window_in_days = 0
+  tags = {
+    Name = var.tag-name
+  }
 }
 
-# Provides a resource to manage AWS Secrets Manager secret version including its secret value.
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version
-# Used to set the value
 resource "aws_secretsmanager_secret_version" "coursera_project_username" {
-  #depends_on = [ aws_secretsmanager_secret_version.project_username ]
   secret_id     = aws_secretsmanager_secret.coursera_project_username.id
   secret_string = var.username
 }
 
 resource "aws_secretsmanager_secret_version" "coursera_project_password" {
-  #depends_on = [ aws_secretsmanager_secret_version.project_password ]
   secret_id     = aws_secretsmanager_secret.coursera_project_password.id
   secret_string = data.aws_secretsmanager_random_password.coursera_project.random_password
 }
 
-# Retrieve secrets value set in secret manager
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/secretsmanager_secret_version
-# https://github.com/hashicorp/terraform-provider-aws/issues/14322
 data "aws_secretsmanager_secret_version" "project_username" {
   depends_on = [ aws_secretsmanager_secret_version.coursera_project_username ]
   secret_id = aws_secretsmanager_secret.coursera_project_username.id
@@ -54,7 +43,6 @@ data "aws_secretsmanager_secret_version" "project_password" {
   secret_id = aws_secretsmanager_secret.coursera_project_password.id
 }
 
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance
 resource "aws_db_instance" "default" {
   depends_on = [ aws_secretsmanager_secret_version.coursera_project_password, aws_secretsmanager_secret_version.coursera_project_username ]
   allocated_storage    = 10
@@ -62,7 +50,6 @@ resource "aws_db_instance" "default" {
   engine               = "mysql"
   engine_version       = "8.0"
   instance_class       = "db.t3.micro"
-  # Retrieve secrets value set in secret manager
   username             = data.aws_secretsmanager_secret_version.project_username.secret_string
   password             = data.aws_secretsmanager_secret_version.project_password.secret_string
   parameter_group_name = "default.mysql8.0"
@@ -88,7 +75,7 @@ output "db-name" {
 
 resource "aws_security_group" "module_04_sg" {
   name        = "module_04_sg"
-  description = "Allow HTTP and SSH"
+  description = "Allow HTTP, SSH, and MySQL"
   vpc_id = aws_vpc.module_04_vpc.id
 
   ingress {
@@ -101,6 +88,13 @@ resource "aws_security_group" "module_04_sg" {
   ingress {
     from_port   = 22
     to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -193,7 +187,7 @@ resource "aws_subnet" "module_04_public_3" {
 resource "aws_subnet" "module_04_private_1" {
   vpc_id            = aws_vpc.module_04_vpc.id
   cidr_block        = "10.0.2.0/24"
-  availability_zone = var.az[1]
+  availability_zone = var.az[0]
 
   tags = {
     Name = var.tag-name
@@ -203,6 +197,16 @@ resource "aws_subnet" "module_04_private_1" {
 resource "aws_subnet" "module_04_private_2" {
   vpc_id            = aws_vpc.module_04_vpc.id
   cidr_block        = "10.0.3.0/24"
+  availability_zone = var.az[1]
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+resource "aws_subnet" "module_04_private_3" {
+  vpc_id            = aws_vpc.module_04_vpc.id
+  cidr_block        = "10.0.6.0/24"
   availability_zone = var.az[2]
 
   tags = {
@@ -240,7 +244,7 @@ resource "aws_route_table_association" "module_04_public_3_rta" {
 
 resource "aws_db_subnet_group" "module_04_rds_subnet_group" {
   name       = "coursera-project"
-  subnet_ids = [aws_subnet.module_04_private_1.id, aws_subnet.module_04_private_2.id]
+  subnet_ids = [aws_subnet.module_04_private_1.id, aws_subnet.module_04_private_2.id, aws_subnet.module_04_private_3.id]
 
   tags = {
     Name = var.tag-name
@@ -262,14 +266,11 @@ resource "aws_lb" "lb" {
   }
 }
 
-# output will print a value out to the screen
 output "url" {
   value = aws_lb.lb.dns_name
 }
 
 resource "aws_lb_target_group" "alb-lb-tg" {
-  # depends_on is effectively a waiter -- it forces this resource to wait until the listed
-  # resource is ready
   depends_on  = [aws_lb.lb]
   name        = var.tg-name
   target_type = "instance"
@@ -298,7 +299,7 @@ resource "aws_autoscaling_group" "asg" {
   health_check_grace_period = 300
   health_check_type         = "EC2"
   target_group_arns         = [aws_lb_target_group.alb-lb-tg.arn]
- vpc_zone_identifier = [aws_subnet.module_04_public.id, aws_subnet.module_04_public_2.id, aws_subnet.module_04_public_3.id]
+  vpc_zone_identifier       = [aws_subnet.module_04_public.id, aws_subnet.module_04_public_2.id, aws_subnet.module_04_public_3.id]
 
   tag {
     key                 = "Name"
@@ -355,8 +356,8 @@ resource "aws_launch_template" "lt" {
   user_data = filebase64("./install-env.sh")
 }
 
-resource "aws_iam_role" "coursera_role" {
-  name = "coursera_role"
+resource "aws_iam_role" "project_role" {
+  name = "project_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -378,7 +379,7 @@ resource "aws_iam_role" "coursera_role" {
 
 resource "aws_iam_role_policy" "coursera_policy_s3" {
   name = "coursera_policy_s3"
-  role = aws_iam_role.coursera_role.id
+  role = aws_iam_role.project_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -403,7 +404,7 @@ resource "aws_iam_role_policy" "coursera_policy_s3" {
 
 resource "aws_iam_role_policy" "coursera_policy_sm" {
   name = "coursera_policy_sm"
-  role = aws_iam_role.coursera_role.id
+  role = aws_iam_role.project_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -425,7 +426,7 @@ resource "aws_iam_role_policy" "coursera_policy_sm" {
 
 resource "aws_iam_role_policy" "coursera_policy_rds" {
   name = "coursera_policy_rds"
-  role = aws_iam_role.coursera_role.id
+  role = aws_iam_role.project_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -444,7 +445,7 @@ resource "aws_iam_role_policy" "coursera_policy_rds" {
 
 resource "aws_iam_role_policy" "coursera_policy_sns" {
   name = "coursera_policy_sns"
-  role = aws_iam_role.coursera_role.id
+  role = aws_iam_role.project_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -464,7 +465,7 @@ resource "aws_iam_role_policy" "coursera_policy_sns" {
 
 resource "aws_iam_instance_profile" "coursera_profile" {
   name = "coursera_profile"
-  role = aws_iam_role.coursera_role.name
+  role = aws_iam_role.project_role.name
 }
 
 resource "aws_sns_topic_subscription" "updates_email" {
