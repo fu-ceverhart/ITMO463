@@ -104,6 +104,7 @@ output "db-name" {
 resource "aws_security_group" "module_04_sg" {
   name        = "module_04_sg"
   description = "Allow HTTP and SSH"
+  vpc_id = aws_vpc.module_04_vpc.id
 
   ingress {
     from_port   = 80
@@ -134,6 +135,7 @@ resource "aws_security_group" "module_04_sg" {
 resource "aws_security_group" "module_04_rds_sg" {
   name        = "module_04_rds_sg"
   description = "Allow MySQL from EC2 only"
+  vpc_id = aws_vpc.module_04_vpc.id
 
   ingress {
     from_port       = 3306
