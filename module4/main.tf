@@ -355,6 +355,27 @@ resource "aws_launch_template" "lt" {
   user_data = filebase64("./install-env.sh")
 }
 
+resource "aws_iam_role" "coursera_role" {
+  name = "coursera_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
 resource "aws_iam_role_policy" "coursera_policy_s3" {
   name = "coursera_policy_s3"
   role = aws_iam_role.coursera_role.id
@@ -443,4 +464,10 @@ resource "aws_iam_role_policy" "coursera_policy_sns" {
 resource "aws_iam_instance_profile" "coursera_profile" {
   name = "coursera_profile"
   role = aws_iam_role.coursera_role.name
+}
+
+resource "aws_sns_topic_subscription" "updates_email" {
+  topic_arn = aws_sns_topic.updates.arn
+  protocol  = "email"
+  endpoint  = "ceverhart@hawk.illinoistech.edu"
 }
