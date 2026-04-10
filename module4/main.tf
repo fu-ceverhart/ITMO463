@@ -81,7 +81,7 @@ resource "aws_db_instance" "default" {
   password             = data.aws_secretsmanager_secret_version.project_password.secret_string
   parameter_group_name = "default.mysql8.0"
   skip_final_snapshot  = true
-  #vpc_security_group_ids = aws_security_group
+  vpc_security_group_ids = [aws_security_group.module_04_rds_sg.id]
   
   tags = {
     Name = var.tag-name
@@ -114,6 +114,29 @@ resource "aws_security_group" "module_04_sg" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+resource "aws_security_group" "module_04_rds_sg" {
+  name        = "module_04_rds_sg"
+  description = "Allow MySQL from EC2 only"
+
+  ingress {
+    from_port       = 3306
+    to_port         = 3306
+    protocol        = "tcp"
+    security_groups = [aws_security_group.module_04_sg.id]
   }
 
   egress {
