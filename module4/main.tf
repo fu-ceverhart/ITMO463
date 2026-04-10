@@ -354,3 +354,24 @@ resource "aws_launch_template" "lt" {
   }
   user_data = filebase64("./install-env.sh")
 }
+
+resource "aws_iam_role" "coursera_role" {
+  name = "coursera_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name = var.tag-name
+  }
+}
