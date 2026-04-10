@@ -4,7 +4,7 @@ resource "aws_instance" "helloworld" {
   ami                    = var.imageid
   instance_type          = var.instance-type
   key_name               = var.key-name
-  vpc_security_group_ids = [var.vpc_security_group_ids]
+  vpc_security_group_ids = [aws_security_group.module_04_sg.id]
   user_data              = filebase64("./install-env.sh")
 
   tags = {
@@ -96,4 +96,34 @@ output "db-address" {
 output "db-name" {
   description = "DB Name "
   value = aws_db_instance.default.db_name
+}
+
+resource "aws_security_group" "module_04_sg" {
+  name        = "module_04_sg"
+  description = "Allow HTTP and SSH"
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = var.tag-name
+  }
 }
