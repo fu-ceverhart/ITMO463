@@ -303,3 +303,42 @@ resource "aws_lb_listener" "front_end" {
     target_group_arn = aws_lb_target_group.alb-lb-tg.arn
   }
 }
+
+resource "aws_autoscaling_group" "asg" {
+  name                      = var.asg-name
+  depends_on                = [aws_launch_template.lt]
+  desired_capacity          = var.desired
+  max_size                  = var.max
+  min_size                  = var.min
+  health_check_grace_period = 300
+  health_check_type         = "EC2"
+  target_group_arns         = [aws_lb_target_group.alb-lb-tg.arn]
+ vpc_zone_identifier = [aws_subnet.module_04_public.id, aws_subnet.module_04_public_2.id, aws_subnet.module_04_public_3.id]
+
+  tag {
+    key                 = "Name"
+    value               = var.tag-name
+    propagate_at_launch = true
+  }
+
+  launch_template {
+    id      = aws_launch_template.lt.id
+    version = "$Latest"
+  }
+}
+
+resource "aws_s3_bucket" "raw" {
+  bucket = var.raw-s3-bucket
+
+  tags = {
+    Name = var.tag-name
+  }
+}
+
+resource "aws_s3_bucket" "finished" {
+  bucket = var.finished-s3-bucket
+
+  tags = {
+    Name = var.tag-name
+  }
+}
