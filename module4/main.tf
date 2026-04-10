@@ -342,3 +342,11 @@ resource "aws_s3_bucket" "finished" {
     Name = var.tag-name
   }
 }
+
+resource "aws_sns_topic" "updates" {
+  name = var.user-sns-topic
+  
+  tags = {
+    Name = var.tag-name
+  }
+}
