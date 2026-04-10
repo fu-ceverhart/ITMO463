@@ -1,6 +1,6 @@
 # Add values
 # Use the AMI of the custom Ec2 image you previously created
-imageid                = "ami-021769d848635b6f4"
+imageid                = "ami-0597054c32c573a80"
 # Use t2.micro for the AWS Free Tier
 instance-type          = "t3.micro"
 key-name               = "module-04"
