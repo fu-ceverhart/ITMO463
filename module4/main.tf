@@ -281,3 +281,14 @@ resource "aws_lb" "lb" {
 output "url" {
   value = aws_lb.lb.dns_name
 }
+
+resource "aws_lb_target_group" "alb-lb-tg" {
+  # depends_on is effectively a waiter -- it forces this resource to wait until the listed
+  # resource is ready
+  depends_on  = [aws_lb.lb]
+  name        = var.tg-name
+  target_type = "instance"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = data.aws_vpc.project.id
+}
