@@ -16,7 +16,9 @@ curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 apt-get install -y nodejs
 
 # Install awscli
-apt-get install -y awscli
+# apt-get install -y awscli
+apt-get install -y python3-pip
+pip3 install awscli --break-system-packages
 
 # Pull the GitHub deploy key from Secrets Manager
 aws secretsmanager get-secret-value --secret-id github-deploy-key --region us-east-1 --query SecretString --output text > /home/ubuntu/.ssh/github-deploy-key
