@@ -233,8 +233,14 @@ if messagesInQueue == True:
     # Graded component
     # Add code to update the RAWS3URL to have the value: done after the image is processed
     #############################################################################
-
-
+    print("Connecting to RDS and updating RAWS3URL to 'done' for record: " + str(ID) + "...")
+    cnx = mysql.connector.connect(host=hosturl, user=uname, password=pword, database='company')
+    cursor = cnx.cursor()
+    update_raw = ("UPDATE entries SET RAWS3URL = 'done' WHERE ID = " + str(ID) + ";")
+    cursor.execute(update_raw)
+    cnx.commit()
+    cursor.close()
+    cnx.close()
 
     #############################################################################
     # Extra challenge, not graded...
