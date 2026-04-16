@@ -511,9 +511,17 @@ data "aws_iam_policy_document" "allow_access_from_another_account-finished" {
 
 # Create SQS Queue
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue
+resource "aws_sqs_queue" "coursera_queue" {
+  name                       = var.sqs-name
+  delay_seconds              = 90
+  message_retention_seconds  = 86400
+  receive_wait_time_seconds  = 10
+  visibility_timeout_seconds = 180
 
-
-
+  tags = {
+    Name = var.tag-name
+  }
+}
 
 # Create SNS Topics
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic
