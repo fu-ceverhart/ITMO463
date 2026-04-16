@@ -25,30 +25,38 @@ node -v
 ##############################################################################
 # Use NPM (node package manager to install AWS JavaScript SDK)
 ##############################################################################
-# Run NPM to install the NPM Node packages needed for the code
-# You will start this NodeJS script by executing the command: node app.js
-# from the directory where app.js is located. The program `pm2` can be
-# used to auto start NodeJS applications (as they don't have a normal
-# systemd service handler).
-# <https://pm2.keymetrics.io/docs/usage/quick-start/>. This will require
-# the install of PM2 via npm as well.
+sudo apt install -y python3-pip
+pip3 install awscli --break-system-packages
+
 cd /home/ubuntu
 sudo -u ubuntu npm install @aws-sdk/client-sqs @aws-sdk/client-s3 @aws-sdk/client-sns @aws-sdk/client-rds @aws-sdk/client-secrets-manager express multer multer-s3 mysql2
 sudo npm install pm2 -g
 
-# Command to clone your private repo via SSH usign the Private key
-####################################################################
-# Note - change "hajek.git" to be your private repo name (hawk ID) #
-####################################################################
-sudo -u ubuntu git clone git@github.com:jhajek/coursera-cloud-computing.git
+# Pull the GitHub deploy key from Secrets Manager
+aws secretsmanager get-secret-value --secret-id github-deploy-key --region us-east-1 --query SecretString --output text > /home/ubuntu/.ssh/github-deploy-key
+chmod 600 /home/ubuntu/.ssh/github-deploy-key
+chown ubuntu:ubuntu /home/ubuntu/.ssh/github-deploy-key
+
+# Add GitHub to known hosts
+sudo -u ubuntu ssh-keyscan github.com >> /home/ubuntu/.ssh/known_hosts
+
+# Configure SSH to use the deploy key
+cat > /home/ubuntu/.ssh/config <<EOF
+Host github.com
+  IdentityFile /home/ubuntu/.ssh/github-deploy-key
+  StrictHostKeyChecking no
+EOF
+chown ubuntu:ubuntu /home/ubuntu/.ssh/config
+chmod 600 /home/ubuntu/.ssh/config
+
+# Command to clone your private repo via SSH using the Private key
+sudo -u ubuntu git clone git@github.com:fu-ceverhart/ITMO463.git /home/ubuntu/ITMO463
 
 # Start the nodejs app where it is located via PM2
 # https://pm2.keymetrics.io/docs/usage/quick-start
-cd /home/ubuntu/coursera-cloud-computing/itmo-463-563/M5L8-fix
-# Pull latest changes
-#sudo -u ubuntu git pull
+cd /home/ubuntu/ITMO463/module5/M5-assessment-templates-and-code
 
-sudo cp /home/ubuntu/coursera-cloud-computing/itmo-463-563/M5L8-fix/default /etc/nginx/sites-available/default
+sudo cp /home/ubuntu/ITMO463/module5/M5-assessment-templates-and-code/default /etc/nginx/sites-available/default
 sudo systemctl daemon-reload
 sudo systemctl restart nginx
 
