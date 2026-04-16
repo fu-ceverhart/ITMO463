@@ -3,7 +3,7 @@
 imageid                = "ami-0597054c32c573a80"
 # Use t2.micro for the AWS Free Tier
 instance-type          = "t2.micro"
-key-name               = "module-04"
+key-name               = "module-05"
 vpc_security_group_ids = ""
 tag-name               = "module-05"
 user-sns-topic         = "cde-updates"
