@@ -3,10 +3,10 @@
 # Install dependecies here:
 
 ##############################################################################
-# Installing Nginx
+# Installing Nginx, git, and awscli
 ##############################################################################
 sudo apt update -y
-sudo apt install nginx unzip -y
+sudo apt install -y nginx unzip git awscli
 
 ##############################################################################
 # Enable and start Nginx service
@@ -22,14 +22,10 @@ curl -fsSL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
 sudo bash nodesource_setup.sh
 sudo apt install -y nodejs
 node -v
+
 ##############################################################################
 # Use NPM (node package manager to install AWS JavaScript SDK)
 ##############################################################################
-sudo apt install -y python3-pip
-pip3 install awscli --break-system-packages
-
-cd /home/ubuntu
-sudo -u ubuntu npm install @aws-sdk/client-sqs @aws-sdk/client-s3 @aws-sdk/client-sns @aws-sdk/client-rds @aws-sdk/client-secrets-manager express multer multer-s3 mysql2
 sudo npm install pm2 -g
 
 # Pull the GitHub deploy key from Secrets Manager
@@ -49,15 +45,21 @@ EOF
 chown ubuntu:ubuntu /home/ubuntu/.ssh/config
 chmod 600 /home/ubuntu/.ssh/config
 
-# Command to clone your private repo via SSH using the Private key
+# Clone the repo
 sudo -u ubuntu git clone git@github.com:fu-ceverhart/ITMO463.git /home/ubuntu/ITMO463
 
-# Start the nodejs app where it is located via PM2
-# https://pm2.keymetrics.io/docs/usage/quick-start
+# Install npm packages in the app directory
 cd /home/ubuntu/ITMO463/module5/M5-assessment-templates-and-code
+sudo -u ubuntu npm install @aws-sdk/client-sqs @aws-sdk/client-s3 @aws-sdk/client-sns \
+  @aws-sdk/client-rds @aws-sdk/client-secrets-manager \
+  express multer multer-s3 mysql2 uuid
 
+# Configure nginx reverse proxy
 sudo cp /home/ubuntu/ITMO463/module5/M5-assessment-templates-and-code/default /etc/nginx/sites-available/default
 sudo systemctl daemon-reload
 sudo systemctl restart nginx
 
-sudo pm2 start app.js
+# Start the app with pm2
+sudo -u ubuntu pm2 start /home/ubuntu/ITMO463/module5/M5-assessment-templates-and-code/app.js
+sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu
+sudo -u ubuntu pm2 save
