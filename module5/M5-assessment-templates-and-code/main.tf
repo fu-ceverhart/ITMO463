@@ -253,6 +253,25 @@ resource "aws_iam_role_policy" "sm_fullaccess_policy" {
   })
 }
 
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy
+resource "aws_iam_role_policy" "sqs_fullaccess_policy" {
+  name = "sqs_fullaccess_policy"
+  role = aws_iam_role.role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "sqs:*",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
+
 
 # creating a private IPv4 subnet per AZ
 # https://stackoverflow.com/questions/63991120/automatically-create-a-subnet-for-each-aws-availability-zone-in-terraform
