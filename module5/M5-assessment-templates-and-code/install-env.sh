@@ -1,42 +1,42 @@
 #!/bin/bash
+set -e
 
-# Install dependecies here:
+# Wait for apt lock (Ubuntu 24.04 runs unattended-upgrades on first boot)
+while pgrep -x apt-get > /dev/null || pgrep -x dpkg > /dev/null; do
+  echo "Waiting for background apt/dpkg to finish..."
+  sleep 5
+done
+systemctl disable --now unattended-upgrades || true
 
-##############################################################################
-# Installing Nginx, git, and awscli
-##############################################################################
-sudo apt update -y
-sudo apt install -y nginx unzip git awscli
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y nginx unzip git curl
 
-##############################################################################
-# Enable and start Nginx service
-##############################################################################
-sudo systemctl enable nginx
-sudo systemctl start nginx
+systemctl enable nginx
+systemctl start nginx
 
-##############################################################################
-# Install Node JS
-# https://github.com/nodesource/distributions#installation-instructions-deb
-##############################################################################
-curl -fsSL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
-sudo bash nodesource_setup.sh
-sudo apt install -y nodejs
+# Install AWS CLI v2 (awscli no longer in apt on Ubuntu 24.04)
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+unzip -q /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install
+aws --version
+
+# Install Node JS 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x -o /tmp/nodesource_setup.sh
+bash /tmp/nodesource_setup.sh
+apt-get install -y nodejs
 node -v
+npm -v
 
-##############################################################################
-# Use NPM (node package manager to install AWS JavaScript SDK)
-##############################################################################
-sudo npm install pm2 -g
+npm install pm2 -g
 
 # Pull the GitHub deploy key from Secrets Manager
 aws secretsmanager get-secret-value --secret-id github-deploy-key --region us-east-1 --query SecretString --output text > /home/ubuntu/.ssh/github-deploy-key
 chmod 600 /home/ubuntu/.ssh/github-deploy-key
 chown ubuntu:ubuntu /home/ubuntu/.ssh/github-deploy-key
 
-# Add GitHub to known hosts
 sudo -u ubuntu ssh-keyscan github.com >> /home/ubuntu/.ssh/known_hosts
 
-# Configure SSH to use the deploy key
 cat > /home/ubuntu/.ssh/config <<EOF
 Host github.com
   IdentityFile /home/ubuntu/.ssh/github-deploy-key
@@ -45,21 +45,15 @@ EOF
 chown ubuntu:ubuntu /home/ubuntu/.ssh/config
 chmod 600 /home/ubuntu/.ssh/config
 
-# Clone the repo
 sudo -u ubuntu git clone git@github.com:fu-ceverhart/ITMO463.git /home/ubuntu/ITMO463
 
-# Install npm packages in the app directory
 cd /home/ubuntu/ITMO463/module5/M5-assessment-templates-and-code
-sudo -u ubuntu npm install @aws-sdk/client-sqs @aws-sdk/client-s3 @aws-sdk/client-sns \
-  @aws-sdk/client-rds @aws-sdk/client-secrets-manager \
-  express multer multer-s3 mysql2 uuid
+sudo -u ubuntu npm install @aws-sdk/client-sqs @aws-sdk/client-s3 @aws-sdk/client-sns @aws-sdk/client-rds @aws-sdk/client-secrets-manager express multer multer-s3 mysql2 uuid
 
-# Configure nginx reverse proxy
-sudo cp /home/ubuntu/ITMO463/module5/M5-assessment-templates-and-code/default /etc/nginx/sites-available/default
-sudo systemctl daemon-reload
-sudo systemctl restart nginx
+cp /home/ubuntu/ITMO463/module5/M5-assessment-templates-and-code/default /etc/nginx/sites-available/default
+systemctl daemon-reload
+systemctl restart nginx
 
-# Start the app with pm2
 sudo -u ubuntu pm2 start /home/ubuntu/ITMO463/module5/M5-assessment-templates-and-code/app.js
-sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu
 sudo -u ubuntu pm2 save
+env PATH=$PATH:/usr/bin /usr/local/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu
