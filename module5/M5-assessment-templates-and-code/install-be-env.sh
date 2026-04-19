@@ -9,7 +9,7 @@ systemctl disable --now unattended-upgrades || true
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y python3-dev python3-setuptools python3-pip unzip curl git
+apt-get install -y python3-dev python3-setuptools python3-pip unzip curl git mysql-client-core-8.0
 
 # Install AWS CLI v2 (awscli no longer in apt on Ubuntu 24.04)
 curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
