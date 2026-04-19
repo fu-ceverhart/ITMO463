@@ -56,4 +56,4 @@ systemctl restart nginx
 
 sudo -u ubuntu pm2 start /home/ubuntu/ITMO463/module5/M5-assessment-templates-and-code/app.js
 sudo -u ubuntu pm2 save
-env PATH=$PATH:/usr/bin /usr/local/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu
+$(which pm2) startup systemd -u ubuntu --hp /home/ubuntu || true

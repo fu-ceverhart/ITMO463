@@ -48,16 +48,18 @@ const s3 = new S3Client({ region: REGION });
 // Using the AWS JavaScript SDK
 ///////////////////////////////////////////////////////////////////////////
 var bucketName = '';
-//listBuckets().then(result =>{bucketName = result;}).catch(err=>{console.error("listBuckets function call failed.")});
-	var upload = multer({
-        storage: multerS3({
+var upload = multer({
+    storage: multerS3({
         s3: s3,
-        bucket: bucketName,
+        bucket: async function (req, file, cb) {
+            const params = await listBuckets();
+            cb(null, params.Bucket);
+        },
         key: function (req, file, cb) {
             cb(null, file.originalname);
-            }
+        }
     })
-	});
+});
 
 //////////////////////////////////////////////////////////
 // Add S3 ListBucket code
