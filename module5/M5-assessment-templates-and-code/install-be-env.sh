@@ -38,6 +38,18 @@ sudo -u ubuntu git clone git@github.com:fu-ceverhart/ITMO463.git /home/ubuntu/IT
 
 cd /home/ubuntu/ITMO463/module5/M5-assessment-templates-and-code
 
+# Provision the database schema
+RDS_HOST=$(aws rds describe-db-instances --region us-east-1 --query 'DBInstances[0].Endpoint.Address' --output text)
+DB_USER=$(aws secretsmanager get-secret-value --secret-id uname --region us-east-1 --query SecretString --output text)
+DB_PASS=$(aws secretsmanager get-secret-value --secret-id pword --region us-east-1 --query SecretString --output text)
+
+until mysql -h $RDS_HOST -u $DB_USER -p$DB_PASS -e "SELECT 1;" 2>/dev/null; do
+  echo "Waiting for RDS to be reachable..."
+  sleep 10
+done
+
+mysql -h $RDS_HOST -u $DB_USER -p$DB_PASS < ./create.sql
+
 cp ./app.py /usr/local/bin/
 cp ./checkqueue.timer /etc/systemd/system/
 cp ./checkqueue.service /etc/systemd/system/
