@@ -15,7 +15,7 @@ variable "imageid" {}
 variable "instance-type" {}
 variable "key-name" {}
 variable "vpc_security_group_ids" {}
-variable "az" { default = ["us-east-2a", "us-east-2b", "us-east-2c"] }
+variable "az" { default = ["us-east-1a", "us-east-1b", "us-east-1c"] }
 variable "tag-name" {}
 variable "user-sns-topic" {}
 variable "elb-name" {}
@@ -29,4 +29,5 @@ variable "region" {}
 variable "raw-s3-bucket" {}
 variable "finished-s3-bucket" {}
 variable "sqs-name" {}
+variable "dynamodb-name" {}
 
