@@ -23,7 +23,7 @@ clientS3 = boto3.client('s3', region_name=region,config=Config(s3={'addressing_s
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html
 print("Getting a list of DynamoDB Tables...")
-
+responseDynamoTables = clientDynamo.list_tables()
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sqs/client/list_queues.html
 print("Getting a list of SQS queues...")
