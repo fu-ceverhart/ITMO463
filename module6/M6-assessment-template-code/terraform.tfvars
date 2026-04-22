@@ -2,7 +2,7 @@
 # Use the AMI of the custom Ec2 image you previously created
 imageid                = "ami-0597054c32c573a80"
 # Use t2.micro for the AWS Free Tier
-instance-type          = "t2.micro"
+instance-type          = "t3.micro"
 key-name               = "module-05"
 vpc_security_group_ids = "sg-0fafd233da91b97bd"
 tag-name               = "module-06"
