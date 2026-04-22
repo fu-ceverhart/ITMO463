@@ -589,7 +589,7 @@ resource "aws_dynamodb_table_item" "insert-sample-record" {
   item = <<ITEM
 {
   "Email": {"S": ""},
-  "RecordNumber": {"S": ""},
+  "RecordNumber": {"S": "sample-001"},
   "CustomerName": {"S": ""},
   "Phone": {"S": ""},
   "Stat": {"N": "0"},
