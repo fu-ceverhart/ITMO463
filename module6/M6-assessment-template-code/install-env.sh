@@ -1,53 +1,58 @@
 #!/bin/bash
+set -e
 
-# Install dependecies here:
+while pgrep -x apt-get > /dev/null || pgrep -x dpkg > /dev/null; do
+  echo "Waiting for background apt/dpkg to finish..."
+  sleep 5
+done
+systemctl disable --now unattended-upgrades || true
 
-##############################################################################
-# Installing Nginx
-##############################################################################
-sudo apt update -y
-sudo apt install nginx unzip -y
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y nginx unzip git curl
 
-##############################################################################
-# Enable and start Nginx service
-##############################################################################
-sudo systemctl enable nginx
-sudo systemctl start nginx
+systemctl enable nginx
+systemctl start nginx
 
-##############################################################################
-# Install Node JS
-# https://github.com/nodesource/distributions#installation-instructions-deb
-##############################################################################
-curl -fsSL https://deb.nodesource.com/setup_20.x -o nodesource_setup.sh
-sudo bash nodesource_setup.sh
-sudo apt install -y nodejs
+# Install AWS CLI v2
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+unzip -q /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install
+aws --version
+
+# Install Node JS 20.x
+curl -fsSL https://deb.nodesource.com/setup_20.x -o /tmp/nodesource_setup.sh
+bash /tmp/nodesource_setup.sh
+apt-get install -y nodejs
 node -v
-##############################################################################
-# Use NPM (node package manager to install AWS JavaScript SDK)
-##############################################################################
-# Run NPM to install the NPM Node packages needed for the code
-# You will start this NodeJS script by executing the command: node app.js
-# from the directory where app.js is located. The program `pm2` can be
-# used to auto start NodeJS applications (as they don't have a normal
-# systemd service handler).
-# <https://pm2.keymetrics.io/docs/usage/quick-start/>. This will require
-# the install of PM2 via npm as well.
-cd /home/ubuntu
-sudo -u ubuntu npm install @aws-sdk/client-sqs @aws-sdk/client-s3 @aws-sdk/client-sns @aws-sdk/client-dynamodb express multer multer-s3 uuid ip
-sudo npm install pm2 -g
+npm -v
 
-# Command to clone your private repo via SSH usign the Private key
-####################################################################
-# Note - change "fu-ceverhart" to be your private repo name (hawk ID) #
-####################################################################
-sudo -u ubuntu git clone git@github.com:fu-ceverhart/ITMO463.git
+npm install pm2 -g
 
-# Start the nodejs app where it is located via PM2
-# https://pm2.keymetrics.io/docs/usage/quick-start
+# Pull the GitHub deploy key from Secrets Manager
+aws secretsmanager get-secret-value --secret-id github-deploy-key --region us-east-1 --query SecretString --output text > /home/ubuntu/.ssh/github-deploy-key
+chmod 600 /home/ubuntu/.ssh/github-deploy-key
+chown ubuntu:ubuntu /home/ubuntu/.ssh/github-deploy-key
+
+sudo -u ubuntu ssh-keyscan github.com >> /home/ubuntu/.ssh/known_hosts
+
+cat > /home/ubuntu/.ssh/config <<EOF
+Host github.com
+  IdentityFile /home/ubuntu/.ssh/github-deploy-key
+  StrictHostKeyChecking no
+EOF
+chown ubuntu:ubuntu /home/ubuntu/.ssh/config
+chmod 600 /home/ubuntu/.ssh/config
+
+sudo -u ubuntu git clone git@github.com:fu-ceverhart/ITMO463.git /home/ubuntu/ITMO463
+
 cd /home/ubuntu/ITMO463/module6/M6-assessment-template-code
+sudo -u ubuntu npm install @aws-sdk/client-sqs @aws-sdk/client-s3 @aws-sdk/client-sns @aws-sdk/client-dynamodb express multer multer-s3 uuid ip
 
-sudo cp /home/ubuntu/ITMO463/module6/M6-assessment-template-code/default /etc/nginx/sites-available/default
-sudo systemctl daemon-reload
-sudo systemctl restart nginx
+cp /home/ubuntu/ITMO463/module6/M6-assessment-template-code/default /etc/nginx/sites-available/default
+systemctl daemon-reload
+systemctl restart nginx
 
-sudo pm2 start app.js
+sudo -u ubuntu pm2 start /home/ubuntu/ITMO463/module6/M6-assessment-template-code/app.js
+sudo -u ubuntu pm2 save
+$(which pm2) startup systemd -u ubuntu --hp /home/ubuntu || true

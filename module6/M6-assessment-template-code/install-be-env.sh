@@ -1,35 +1,46 @@
 #!/bin/bash
+set -e
 
-# Install Backend dependecies here:
+while pgrep -x apt-get > /dev/null || pgrep -x dpkg > /dev/null; do
+  echo "Waiting for background apt/dpkg to finish..."
+  sleep 5
+done
+systemctl disable --now unattended-upgrades || true
 
-##############################################################################
-# Installing Python Pip and library Dependencies
-##############################################################################
-sudo apt update -y
-sudo apt install -y python3-dev python3-setuptools python3-pip
-sudo -u ubuntu python3 -m pip install pip --upgrade
-python3 -m pip install pillow
-python3 -m pip install boto3
-python3 -m pip install mysql-connector-python
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y python3-dev python3-setuptools python3-pip unzip curl git
 
-cd /home/ubuntu
+# Install AWS CLI v2
+curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+unzip -q /tmp/awscliv2.zip -d /tmp
+/tmp/aws/install
+aws --version
 
-# Command to clone your private repo via SSH usign the Private key
-####################################################################
-# Note - change "fu-ceverhart" to be your private repo name (hawk ID) #
-####################################################################
-sudo -u ubuntu git clone git@github.com:fu-ceverhart/ITMO463.git
+python3 -m pip install --break-system-packages pillow boto3
 
-# Start the nodejs app where it is located via PM2
-# https://pm2.keymetrics.io/docs/usage/quick-start
+# Pull the GitHub deploy key from Secrets Manager
+aws secretsmanager get-secret-value --secret-id github-deploy-key --region us-east-1 --query SecretString --output text > /home/ubuntu/.ssh/github-deploy-key
+chmod 600 /home/ubuntu/.ssh/github-deploy-key
+chown ubuntu:ubuntu /home/ubuntu/.ssh/github-deploy-key
+
+sudo -u ubuntu ssh-keyscan github.com >> /home/ubuntu/.ssh/known_hosts
+
+cat > /home/ubuntu/.ssh/config <<EOF
+Host github.com
+  IdentityFile /home/ubuntu/.ssh/github-deploy-key
+  StrictHostKeyChecking no
+EOF
+chown ubuntu:ubuntu /home/ubuntu/.ssh/config
+chmod 600 /home/ubuntu/.ssh/config
+
+sudo -u ubuntu git clone git@github.com:fu-ceverhart/ITMO463.git /home/ubuntu/ITMO463
+
 cd /home/ubuntu/ITMO463/module6/M6-assessment-template-code
 
-echo "Copying ./app.py to /usr/local/bin/..."
-sudo cp ./app.py /usr/local/bin/
-echo "Copying ./checkqueue.timer to /etc/systemd/system/..."
-sudo cp ./checkqueue.timer /etc/systemd/system/
-echo "Copying ./checkqueue.service to /etc/systemd/system/..."
-sudo cp ./checkqueue.service /etc/systemd/system/
+cp ./app.py /usr/local/bin/
+cp ./checkqueue.timer /etc/systemd/system/
+cp ./checkqueue.service /etc/systemd/system/
 
-sudo systemctl enable --now checkqueue.timer
-sudo systemctl enable checkqueue.service
+systemctl enable --now checkqueue.timer
+systemctl enable checkqueue.service
