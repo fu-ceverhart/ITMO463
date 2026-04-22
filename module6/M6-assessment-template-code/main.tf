@@ -563,10 +563,12 @@ resource "aws_dynamodb_table" "coursera-dynamodb-table" {
   billing_mode   = "PROVISIONED"
   read_capacity  = 20
   write_capacity = 20
-  # Add hash key of type String and the RecordNumber attribute
+  hash_key       = "RecordNumber"
 
-  # This will be the UUID and how we uniquely identify records
-
+  attribute {
+    name = "RecordNumber"
+    type = "S"
+  }
 
   tags = {
     Name        = var.tag-name
