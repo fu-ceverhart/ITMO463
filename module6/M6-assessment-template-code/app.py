@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 messagesInQueue = False
 
 # https://stackoverflow.com/questions/40377662/boto3-client-noregionerror-you-must-specify-a-region-error-only-sometimes
-region = 'us-east-2'
+region = 'us-east-1'
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sqs.html
 clientSQS = boto3.client('sqs',region_name=region)
