@@ -1,3 +1,5 @@
+# Run with . .\set-aws-env.ps1
+
 $envFile = Join-Path $PSScriptRoot ".env"
 
 foreach ($line in Get-Content $envFile) {
