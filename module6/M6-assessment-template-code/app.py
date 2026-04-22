@@ -140,8 +140,15 @@ if messagesInQueue == True:
     # Add Dynamo Update code
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb/client/update_item.html
     ###################################################################
-    # add presigned URL code to Item in DynamoDB
- 
+    # Update the FINISHEDURL with the presigned URL
+    print("Updating DynamoDB with presigned URL...")
+    responseUpdateFinished = clientDynamo.update_item(
+        TableName=responseDynamoTables['TableNames'][0],
+        Key={'RecordNumber': {'S': responseMessages['Messages'][0]['Body']}},
+        UpdateExpression='SET FINSIHEDS3URL = :url',
+        ExpressionAttributeValues={':url': {'S': responsePresigned}}
+    )
+
     #################################################################################
     # SEND Presigned URL to SNS Topics
     #################################################################################
