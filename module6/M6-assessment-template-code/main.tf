@@ -192,7 +192,23 @@ resource "aws_iam_role_policy" "s3_fullaccess_policy" {
 }
 
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy
-# Add DynamoDB full access policy
+resource "aws_iam_role_policy" "dynamodb_fullaccess_policy" {
+  name = "dynamodb_fullaccess_policy"
+  role = aws_iam_role.role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "dynamodb:*",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
 
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy
 resource "aws_iam_role_policy" "sns_fullaccess_policy" {
