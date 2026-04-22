@@ -2,6 +2,7 @@
 .terraform
 .terraform.lock.hcl
 .venv
+*.backup
 *.tfstate
 *.tfstate.backup
 *.tfstate.lock.info
