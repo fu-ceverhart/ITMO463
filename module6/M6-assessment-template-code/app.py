@@ -191,7 +191,13 @@ if messagesInQueue == True:
     #############################################################################
     # Add code to update the RAWS3URL to have the value: done after the image is processed
     #############################################################################
-
+    print("Updating RAWS3URL to 'done' for processed image...")
+    responseUpdateRaws = clientDynamo.update_item(
+        TableName=responseDynamoTables['TableNames'][0],
+        Key={'RecordNumber': {'S': responseMessages['Messages'][0]['Body']}},
+        UpdateExpression='SET RAWS3URL = :done',
+        ExpressionAttributeValues={':done': {'S': 'done'}}
+    )
 
 
     #############################################################################
