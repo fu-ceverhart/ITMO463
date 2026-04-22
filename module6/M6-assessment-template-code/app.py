@@ -1,5 +1,4 @@
 import boto3
-import mysql.connector
 from io import BytesIO
 from PIL import Image
 import logging
