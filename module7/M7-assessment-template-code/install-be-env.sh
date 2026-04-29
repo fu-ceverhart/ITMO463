@@ -9,10 +9,7 @@ systemctl disable --now unattended-upgrades || true
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y nginx unzip git curl
-
-systemctl enable nginx
-systemctl start nginx
+apt-get install -y python3-dev python3-setuptools python3-pip unzip curl git
 
 # Install AWS CLI v2
 curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
@@ -20,14 +17,7 @@ unzip -q /tmp/awscliv2.zip -d /tmp
 /tmp/aws/install
 aws --version
 
-# Install Node JS 20.x
-curl -fsSL https://deb.nodesource.com/setup_20.x -o /tmp/nodesource_setup.sh
-bash /tmp/nodesource_setup.sh
-apt-get install -y nodejs
-node -v
-npm -v
-
-npm install pm2 -g
+python3 -m pip install --break-system-packages pillow boto3
 
 # Pull the GitHub deploy key from Secrets Manager
 aws secretsmanager get-secret-value --secret-id github-deploy-key --region us-east-1 --query SecretString --output text > /home/ubuntu/.ssh/github-deploy-key
@@ -47,12 +37,10 @@ chmod 600 /home/ubuntu/.ssh/config
 sudo -u ubuntu git clone git@github.com:fu-ceverhart/ITMO463.git /home/ubuntu/ITMO463
 
 cd /home/ubuntu/ITMO463/module6/M6-assessment-template-code
-sudo -u ubuntu npm install @aws-sdk/client-sqs @aws-sdk/client-s3 @aws-sdk/client-sns @aws-sdk/client-dynamodb express multer multer-s3 uuid ip
 
-cp /home/ubuntu/ITMO463/module6/M6-assessment-template-code/default /etc/nginx/sites-available/default
-systemctl daemon-reload
-systemctl restart nginx
+cp ./app.py /usr/local/bin/
+cp ./checkqueue.timer /etc/systemd/system/
+cp ./checkqueue.service /etc/systemd/system/
 
-sudo -u ubuntu pm2 start /home/ubuntu/ITMO463/module6/M6-assessment-template-code/app.js
-sudo -u ubuntu pm2 save
-$(which pm2) startup systemd -u ubuntu --hp /home/ubuntu || true
+systemctl enable --now checkqueue.timer
+systemctl enable checkqueue.service
