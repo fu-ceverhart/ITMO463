@@ -8,3 +8,4 @@
 *.tfstate.lock.info
 *.pem
 secrets.ps1
+package/
