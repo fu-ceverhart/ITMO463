@@ -41,14 +41,13 @@ var ip = require('ip');
 //////////////////////////////////////////////////////////////////////////////
 // Change this to match YOUR default REGION
 //////////////////////////////////////////////////////////////////////////////
-const REGION = "us-east-2"; //e.g. "us-east-1";
+const REGION = "us-east-1";
 const s3 = new S3Client({ region: REGION });
 ///////////////////////////////////////////////////////////////////////////
 // I hardcoded my S3 bucket name, this you need to determine dynamically
 // Using the AWS JavaScript SDK
 ///////////////////////////////////////////////////////////////////////////
-var bucketName = 'jrh-raw-bucket';
-//listBuckets().then(result =>{bucketName = result;}).catch(err=>{console.error("listBuckets function call failed.")});
+var bucketName = 'ceverhart-raw-bucket';
 	var upload = multer({
         storage: multerS3({
         s3: s3,
