@@ -51,15 +51,17 @@ def currentPoints():
 # Check for the existence of a SNS IAM Role Access policy for the iam_for_lambda role 
 # Check the s3 Raw bucket notification configuration has Events values of s3:ObjectCreated:* 
 
-clientec2 = boto3.client('ec2')
-clientelbv2 = boto3.client('elbv2')
-clientasg = boto3.client('autoscaling')
-clients3 = boto3.client('s3')
-clientdynamodb = boto3.client('dynamodb')
-clientiam = boto3.client('iam')
-clientsns = boto3.client('sns')
-clientsqs = boto3.client('sqs')
-clientlambda = boto3.client('lambda')
+session = boto3.Session(region_name="us-east-1")
+
+clientec2 = session.client('ec2')
+clientelbv2 = session.client('elbv2')
+clientasg = session.client('autoscaling')
+clients3 = session.client('s3')
+clientdynamodb = session.client('dynamodb')
+clientiam = session.client('iam')
+clientsns = session.client('sns')
+clientsqs = session.client('sqs')
+clientlambda = session.client('lambda')
 
 # List Lambda functions
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/lambda/client/list_functions.html
