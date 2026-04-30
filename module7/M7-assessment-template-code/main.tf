@@ -612,10 +612,53 @@ resource "aws_iam_role_policy" "s3_fullaccess_lambda_policy" {
 
 
 
-# Here
+resource "aws_iam_role_policy" "dynamodb_fullaccess_lambda_policy" {
+  name = "dynamodb_fullaccess_lambda_policy"
+  role = aws_iam_role.iam_for_lambda.id
 
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["dynamodb:*"]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
 
+resource "aws_iam_role_policy" "sqs_fullaccess_lambda_policy" {
+  name = "sqs_fullaccess_lambda_policy"
+  role = aws_iam_role.iam_for_lambda.id
 
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["sqs:*"]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "sns_fullaccess_lambda_policy" {
+  name = "sns_fullaccess_lambda_policy"
+  role = aws_iam_role.iam_for_lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["sns:*"]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
 
 
 # Create Lambda Function
