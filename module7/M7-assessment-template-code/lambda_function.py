@@ -12,28 +12,18 @@ logger.setLevel("INFO")
 
 def lambda_handler(event, context):
 
-  # Todo add your app.py code here
-  import boto3
-    from io import BytesIO
-    from PIL import Image
-    import logging
-    from botocore.exceptions import ClientError
-    import os
-    from botocore.config import Config
-    from urllib.parse import urlparse
-
     messagesInQueue = False
 
     # https://stackoverflow.com/questions/40377662/boto3-client-noregionerror-you-must-specify-a-region-error-only-sometimes
     region = 'us-east-1'
 
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sqs.html
-    clientSQS = boto3.client('sqs',region_name=region)
-    clientDynamo = boto3.client('dynamodb',region_name=region)
-    clientSNS = boto3.client('sns',region_name=region)
+    clientSQS = boto3.client('sqs', region_name=region)
+    clientDynamo = boto3.client('dynamodb', region_name=region)
+    clientSNS = boto3.client('sns', region_name=region)
     # https://github.com/boto/boto3/issues/1644
     # Needed to help generate pre-signed URLs
-    clientS3 = boto3.client('s3', region_name=region,config=Config(s3={'addressing_style': 'path'}, signature_version='s3v4') )
+    clientS3 = boto3.client('s3', region_name=region, config=Config(s3={'addressing_style': 'path'}, signature_version='s3v4'))
 
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html
     print("Getting a list of DynamoDB Tables...")
@@ -52,36 +42,43 @@ def lambda_handler(event, context):
 
     # Check to see if the queue is empty
     try:
-    responseMessages['Messages']
-    messagesInQueue = True
+        responseMessages['Messages']
+        messagesInQueue = True
     except:
-    print("No messages found on the queue -- try to upload one image to your app...")
-    exit(0) 
+        print("No messages found on the queue -- try to upload one image to your app...")
+        return {
+            'statusCode': 200,
+            'body': json.dumps('No messages in queue')
+        }
 
     if messagesInQueue == True:
         print("Message body content: " + str(responseMessages['Messages'][0]['Body']) + "...")
         print("Proceeding assuming there are messages on the queue...")
-        
+
         # Selecting all of the Items data for a particular RecordNumber
         responseGetDynamoItem = clientDynamo.get_item(
-        TableName=responseDynamoTables['TableNames'][0],
-        Key={ 'RecordNumber': { 'S': responseMessages['Messages'][0]['Body'] }},
-        ConsistentRead=True
-                )
+            TableName=responseDynamoTables['TableNames'][0],
+            Key={'RecordNumber': {'S': responseMessages['Messages'][0]['Body']}},
+            ConsistentRead=True
+        )
 
         print("Printing out all the fields in the record...")
         print(responseGetDynamoItem['Item'])
 
         #######################################################################
         # Hack to skip first blank first record
-        if str(responseGetDynamoItem['Item']['RAWS3URL']) == "":
-        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sqs/client/delete_message.html
-        print("Now deleting the initial blank record off of the queue...")
-        responseDelMessage = clientSQS.delete_message(
-            QueueUrl=responseURL['QueueUrls'][0],
-            ReceiptHandle=responseMessages['Messages'][0]['ReceiptHandle']
-        )
-        exit(0)
+        if responseGetDynamoItem['Item']['RAWS3URL']['S'] == "":
+            # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sqs/client/delete_message.html
+            print("Now deleting the initial blank record off of the queue...")
+            responseDelMessage = clientSQS.delete_message(
+                QueueUrl=responseURL['QueueUrls'][0],
+                ReceiptHandle=responseMessages['Messages'][0]['ReceiptHandle']
+            )
+            return {
+                'statusCode': 200,
+                'body': json.dumps('Skipped blank record')
+            }
+
         #######################################################################
         # Parse URL retrieved from record to get S3 Object key
         # https://docs.python.org/3/library/urllib.parse.html
@@ -94,7 +91,7 @@ def lambda_handler(event, context):
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/list_buckets.html
         responseS3 = clientS3.list_buckets()
 
-        for n in range(0,len(responseS3['Buckets'])):
+        for n in range(0, len(responseS3['Buckets'])):
             if "raw" in responseS3['Buckets'][n]['Name']:
                 BUCKET_NAME = responseS3['Buckets'][n]['Name']
 
@@ -117,44 +114,44 @@ def lambda_handler(event, context):
 
         # https://pythonexamples.org/pillow-convert-image-to-grayscale/
         print("Converting image to grayscale...")
-        # Convert the image to grayscale
         im = im.convert("L")
         print("Saving newly created image to disk...")
-        # Save the grayscale image
-        file_name = "/tmp/grayscale-" + key 
+        file_name = "/tmp/grayscale-" + key
         im.save(file_name)
 
         print("Printing Grayscale Image size meta-data...")
         print(im.format, im.size, im.mode)
-        
+
         # Uploading Files to S3
         # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-uploading-files.html
-        # Upload the file
         print("Pushing modified image to Finished S3 bucket...")
-        for n in range(0,len(responseS3['Buckets'])):
-        if "finished" in responseS3['Buckets'][n]['Name']:
-            FIN_BUCKET_NAME = responseS3['Buckets'][n]['Name']
+        for n in range(0, len(responseS3['Buckets'])):
+            if "finished" in responseS3['Buckets'][n]['Name']:
+                FIN_BUCKET_NAME = responseS3['Buckets'][n]['Name']
 
         try:
             responseS3Put = clientS3.upload_file(file_name, FIN_BUCKET_NAME, key)
         except ClientError as e:
             logging.error(e)
-        
+
         # Generate Presigned URL
         # https://boto3.amazonaws.com/v1/documentation/api/latest/guide/s3-presigned-urls.html
         print("Generating presigned S3 URL...")
         try:
-            responsePresigned = clientS3.generate_presigned_url('get_object', Params={'Bucket': FIN_BUCKET_NAME,'Key': key},ExpiresIn=7200)
+            responsePresigned = clientS3.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': FIN_BUCKET_NAME, 'Key': key},
+                ExpiresIn=7200
+            )
         except ClientError as e:
             logging.error(e)
 
         print(str(responsePresigned))
 
         ###################################################################
-        # Add Dynamo Update code
+        # Update the FINISHEDURL with the presigned URL
         # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb/client/update_item.html
         ###################################################################
-        # Update the FINISHEDURL with the presigned URL
         print("Updating DynamoDB with presigned URL...")
         responseUpdateFinished = clientDynamo.update_item(
             TableName=responseDynamoTables['TableNames'][0],
@@ -166,19 +163,15 @@ def lambda_handler(event, context):
         #################################################################################
         # SEND Presigned URL to SNS Topics
         #################################################################################
-        # Retrieve the TopicARN
-        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sns/client/list_topics.html
         print("Listing SNS Topic ARNs...")
         responseTopics = clientSNS.list_topics()
         print(responseTopics['Topics'][0]['TopicArn'])
-        # Publish Message to the Topic ARN
-        # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/sns/client/publish.html
         messageToSend = "Your image: " + str(file_name) + " is ready for download at: " + str(responsePresigned)
         print("Message we will be sending: " + str(messageToSend))
         responsePublish = clientSNS.publish(
-        TopicArn=responseTopics['Topics'][0]['TopicArn'],
-        Subject="Your image is ready for download!",
-        Message=messageToSend,
+            TopicArn=responseTopics['Topics'][0]['TopicArn'],
+            Subject="Your image is ready for download!",
+            Message=messageToSend,
         )
         print("Message published to SNS Topic, all who are subscribed will receive it...")
 
@@ -189,7 +182,6 @@ def lambda_handler(event, context):
             QueueUrl=responseURL['QueueUrls'][0],
             ReceiptHandle=responseMessages['Messages'][0]['ReceiptHandle']
         )
-
         print(responseDelMessage)
 
         #############################################################################
@@ -198,12 +190,12 @@ def lambda_handler(event, context):
         #############################################################################
         print("Now deleting the Image object from the RawS3 bucket...")
         responseDelObject = clientS3.delete_object(
-        Bucket=BUCKET_NAME,
-        Key=key
+            Bucket=BUCKET_NAME,
+            Key=key
         )
-        
+
         #############################################################################
-        # Add code to update the RAWS3URL to have the value: done after the image is processed
+        # Update the RAWS3URL to 'done' after the image is processed
         #############################################################################
         print("Updating RAWS3URL to 'done' for processed image...")
         responseUpdateRaws = clientDynamo.update_item(
@@ -213,15 +205,7 @@ def lambda_handler(event, context):
             ExpressionAttributeValues={':done': {'S': 'done'}}
         )
 
-
-        #############################################################################
-        # Extra challenge, not gradeded...
-        # Could you add code to unsubscribe your email from the Topic once you received the image?
-        #############################################################################
-
-  # If the lambda event is triggered, then there is a message in the queue
-    
-  return {
-      'statusCode': 200,
-      'body': json.dumps(responsePresigned)
-  }
+    return {
+        'statusCode': 200,
+        'body': json.dumps(responsePresigned)
+    }
