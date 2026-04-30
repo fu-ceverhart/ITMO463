@@ -49,7 +49,7 @@ sudo -u ubuntu git clone git@github.com:fu-ceverhart/ITMO463.git /home/ubuntu/IT
 cd /home/ubuntu/ITMO463/module7/M7-assessment-template-code
 sudo -u ubuntu npm install @aws-sdk/client-sqs @aws-sdk/client-s3 @aws-sdk/client-sns @aws-sdk/client-dynamodb express multer multer-s3 uuid ip
 
-cp /home/ubuntu/ITMO463/module7/M8-assessment-template-code/default /etc/nginx/sites-available/default
+cp /home/ubuntu/ITMO463/module7/M7-assessment-template-code/default /etc/nginx/sites-available/default
 systemctl daemon-reload
 systemctl restart nginx
 
