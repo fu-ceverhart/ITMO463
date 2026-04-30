@@ -674,7 +674,7 @@ resource "aws_lambda_function" "coursera_lambda" {
   handler       = "lambda_function.lambda_handler"
   timeout       = "120"
 
-  //source_code_hash = data.archive_file.lambda.output_base64sha256
+  source_code_hash = filebase64sha256("my_deployment_package.zip")
 
   runtime = "python3.10"
 
