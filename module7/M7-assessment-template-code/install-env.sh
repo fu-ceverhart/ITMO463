@@ -34,7 +34,7 @@ aws secretsmanager get-secret-value --secret-id github-deploy-key --region us-ea
 chmod 600 /home/ubuntu/.ssh/github-deploy-key
 chown ubuntu:ubuntu /home/ubuntu/.ssh/github-deploy-key
 
-sudo -u ubuntu ssh-keyscan github.com >> /home/ubuntu/.ssh/known_hosts
+sudo -u ubuntu bash -c "ssh-keyscan github.com >> /home/ubuntu/.ssh/known_hosts" || true
 
 cat > /home/ubuntu/.ssh/config <<EOF
 Host github.com
